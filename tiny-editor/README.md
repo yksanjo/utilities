@@ -9,6 +9,7 @@ A terminal-based text editor demonstrating buffers and terminal control.
 - **File operations**: Open, Save, New file
 - **Buffer management**: In-memory text storage
 - **Viewport scrolling**: Handle files larger than screen
+- **Syntax highlighting**: Python, JavaScript, C/C++/Java support
 
 ## Usage
 
@@ -62,9 +63,15 @@ python tinyedit.py
 4. **Viewport**: Only visible portion of file is rendered
 5. **Scrolling**: Scroll position adjusts to keep cursor visible
 
+## Supported Languages for Syntax Highlighting
+
+- **Python** (.py): Keywords, strings, comments, numbers, functions
+- **JavaScript/TypeScript** (.js, .jsx, .ts, .tsx)
+- **C/C++** (.c, .cpp, .h, .hpp)
+- **Java** (.java)
+
 ## Limitations
 
-- No syntax highlighting
 - No search/replace
 - No undo/redo
 - Fixed tab width (4 spaces)

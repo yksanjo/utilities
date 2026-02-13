@@ -28,6 +28,7 @@ This demonstrates:
 
 import sys
 import os
+import re
 import termios
 import tty
 import fcntl
@@ -187,6 +188,149 @@ class Terminal:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 
+class SyntaxHighlighter:
+    """Simple syntax highlighting for common languages."""
+    
+    # Color codes
+    RESET = '\033[0m'
+    KEYWORD = '\033[35m'      # Magenta
+    STRING = '\033[32m'       # Green
+    COMMENT = '\033[90m'      # Gray
+    NUMBER = '\033[33m'       # Yellow
+    FUNCTION = '\033[36m'     # Cyan
+    
+    # Python keywords
+    PYTHON_KEYWORDS = {
+        'def', 'class', 'if', 'elif', 'else', 'for', 'while', 'return',
+        'import', 'from', 'as', 'try', 'except', 'finally', 'with',
+        'lambda', 'yield', 'raise', 'break', 'continue', 'pass',
+        'True', 'False', 'None', 'and', 'or', 'not', 'in', 'is',
+        'async', 'await', 'nonlocal', 'global', 'assert', 'del'
+    }
+    
+    # JavaScript keywords
+    JS_KEYWORDS = {
+        'function', 'var', 'let', 'const', 'if', 'else', 'for', 'while',
+        'return', 'class', 'extends', 'super', 'this', 'new', 'try',
+        'catch', 'finally', 'throw', 'switch', 'case', 'default',
+        'break', 'continue', 'true', 'false', 'null', 'undefined',
+        'async', 'await', 'import', 'export', 'from', 'typeof', 'in',
+        'instanceof', 'of', 'yield', 'debugger'
+    }
+    
+    # C/C++/Java keywords
+    C_KEYWORDS = {
+        'int', 'float', 'double', 'char', 'void', 'if', 'else', 'for',
+        'while', 'do', 'return', 'break', 'continue', 'switch', 'case',
+        'default', 'struct', 'typedef', 'static', 'extern', 'const',
+        'sizeof', 'goto', 'union', 'enum', 'inline', 'volatile'
+    }
+    
+    def __init__(self, filename=None):
+        self.filename = filename
+        self.keywords = set()
+        self.is_comment = self._get_comment_func(filename)
+        self._detect_language(filename)
+    
+    def _detect_language(self, filename):
+        """Detect language from filename."""
+        if not filename:
+            return
+        
+        ext = filename.lower().split('.')[-1] if '.' in filename else ''
+        
+        if ext in ('py', 'pyw'):
+            self.keywords = self.PYTHON_KEYWORDS
+        elif ext in ('js', 'jsx', 'ts', 'tsx'):
+            self.keywords = self.JS_KEYWORDS
+        elif ext in ('c', 'cpp', 'cc', 'cxx', 'h', 'hpp', 'java'):
+            self.keywords = self.C_KEYWORDS
+    
+    def _get_comment_func(self, filename):
+        """Get comment detection function based on language."""
+        if not filename:
+            return lambda line: (False, line)
+        
+        ext = filename.lower().split('.')[-1] if '.' in filename else ''
+        
+        if ext in ('py', 'pyw', 'sh', 'rb', 'yaml', 'yml'):
+            # Hash comments
+            return lambda line: (line.strip().startswith('#'), line)
+        elif ext in ('js', 'jsx', 'ts', 'tsx', 'c', 'cpp', 'java'):
+            # C-style comments (simplified)
+            return lambda line: (line.strip().startswith('//'), line)
+        else:
+            return lambda line: (False, line)
+    
+    def highlight(self, line):
+        """Apply syntax highlighting to a line."""
+        if not self.keywords:
+            return line
+        
+        import re
+        result = []
+        i = 0
+        
+        # Check for comment
+        stripped = line.lstrip()
+        is_comment = False
+        if stripped.startswith('#') or stripped.startswith('//'):
+            return self.COMMENT + line + self.RESET
+        
+        while i < len(line):
+            # Try to match string literals
+            if line[i] in ('"', "'"):
+                quote = line[i]
+                j = i + 1
+                while j < len(line) and line[j] != quote:
+                    if line[j] == '\\' and j + 1 < len(line):
+                        j += 2
+                    else:
+                        j += 1
+                if j < len(line):
+                    j += 1
+                result.append(self.STRING + line[i:j] + self.RESET)
+                i = j
+                continue
+            
+            # Try to match numbers
+            if line[i].isdigit():
+                j = i
+                while j < len(line) and (line[j].isdigit() or line[j] == '.'):
+                    j += 1
+                result.append(self.NUMBER + line[i:j] + self.RESET)
+                i = j
+                continue
+            
+            # Try to match keywords and identifiers
+            if line[i].isalpha() or line[i] == '_':
+                j = i
+                while j < len(line) and (line[j].isalnum() or line[j] == '_'):
+                    j += 1
+                word = line[i:j]
+                if word in self.keywords:
+                    result.append(self.KEYWORD + word + self.RESET)
+                else:
+                    result.append(word)
+                i = j
+                continue
+            
+            # Try to match function calls (identifier followed by '(')
+            if line[i] == '(' and result:
+                # Check if previous token is an identifier
+                prev = result[-1]
+                if prev and prev[0].isalpha():
+                    # Extract any ANSI codes and the word
+                    plain = re.sub(r'\033\[[0-9;]*m', '', prev)
+                    if plain and plain[0].isalpha() and plain not in self.keywords:
+                        result[-1] = self.FUNCTION + prev + self.RESET
+            
+            result.append(line[i])
+            i += 1
+        
+        return ''.join(result)
+
+
 class Editor:
     """Main editor class."""
     
@@ -201,17 +345,20 @@ class Editor:
         self.message = ""
         self.message_time = 0
         self.running = True
+        self.highlighter = None
     
     def open_file(self, filename):
         """Open a file."""
         if filename:
             if self.buffer.load(filename):
                 self.message = f"Opened: {filename}"
+                self.highlighter = SyntaxHighlighter(filename)
             else:
                 self.message = f"Error opening: {filename}"
         else:
             self.buffer.filename = None
             self.message = "New file"
+            self.highlighter = None
     
     def save_file(self):
         """Save current file."""
@@ -271,6 +418,9 @@ class Editor:
                 line = self.buffer.get_line(row)
                 # Show portion of line based on horizontal scroll
                 visible = line[self.scroll_col:self.scroll_col + visible_cols]
+                # Apply syntax highlighting
+                if self.highlighter:
+                    visible = self.highlighter.highlight(visible)
                 sys.stdout.write(visible)
         
         # Draw status bar

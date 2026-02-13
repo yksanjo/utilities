@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+    
+    - name: Run tests
+      run: |
+        pytest tests/ -v
+    
+    - name: Test Markdown converter
+      run: |
+        cd markdown-to-html
+        python md2html.py example.md
+        test -f example.html
+    
+    - name: Test Mini-Git
+      run: |
+        cd mini-git
+        python minigit.py init
+        echo "test" > test.txt
+        python minigit.py add test.txt
+        python minigit.py commit -m "Test commit"
+        python minigit.py log
+        python minigit.py status

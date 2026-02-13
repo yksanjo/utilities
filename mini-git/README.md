@@ -25,6 +25,10 @@ python minigit.py commit -m "Initial commit"
 # View history
 python minigit.py log
 
+# Show differences
+python minigit.py diff          # Show all changes
+python minigit.py diff file.txt # Show changes to specific file
+
 # Check status
 python minigit.py status
 ```

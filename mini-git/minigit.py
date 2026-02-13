@@ -248,6 +248,96 @@ class MiniGit:
             
             commit_sha = parent
     
+    def diff(self, filepath=None):
+        """Show differences between working tree and last commit."""
+        if not self.minigit_dir.exists():
+            print("Not a minigit repository. Run 'minigit init' first.")
+            return
+        
+        current_commit = self._get_current_commit()
+        if not current_commit:
+            print("No commits yet - nothing to diff against")
+            return
+        
+        # Get tree from current commit
+        obj_type, data = self._read_object(current_commit)
+        lines = data.decode('utf-8').split('\n')
+        tree_sha = None
+        for line in lines:
+            if line.startswith('tree '):
+                tree_sha = line[5:]
+                break
+        
+        if not tree_sha:
+            print("Error: No tree found in commit")
+            return
+        
+        # Get committed files
+        obj_type, tree_data = self._read_object(tree_sha)
+        committed_files = {}
+        for line in tree_data.decode('utf-8').split('\n'):
+            if '\t' in line:
+                parts = line.split('\t')
+                if len(parts) == 2:
+                    sha = parts[0].split()[-2]  # Extract SHA from "100644 blob SHA"
+                    filename = parts[1]
+                    committed_files[filename] = sha
+        
+        # Determine which files to check
+        if filepath:
+            files_to_check = [filepath] if filepath in committed_files else []
+            if not files_to_check:
+                print(f"File '{filepath}' not in last commit")
+                return
+        else:
+            files_to_check = list(committed_files.keys())
+        
+        has_diff = False
+        for filename in files_to_check:
+            file_path = self.repo_path / filename
+            
+            if not file_path.exists():
+                print(f"\033[31m--- {filename} (deleted)\033[0m")
+                has_diff = True
+                continue
+            
+            # Get committed content
+            committed_sha = committed_files[filename]
+            obj_type, committed_data = self._read_object(committed_sha)
+            committed_content = committed_data.decode('utf-8')
+            
+            # Get current content
+            current_content = file_path.read_text()
+            
+            # Show diff if different
+            if committed_content != current_content:
+                has_diff = True
+                print(f"\033[36mdiff --minigit a/{filename} b/{filename}\033[0m")
+                print(f"\033[33mindex {committed_sha[:7]}..{self._hash_object(current_content)[:7]}\033[0m")
+                print(f"\033[31m--- a/{filename}\033[0m")
+                print(f"\033[32m+++ b/{filename}\033[0m")
+                
+                # Simple line-by-line diff
+                old_lines = committed_content.split('\n')
+                new_lines = current_content.split('\n')
+                
+                for i, (old, new) in enumerate(zip(old_lines, new_lines)):
+                    if old != new:
+                        print(f"\033[31m-{old}\033[0m")
+                        print(f"\033[32m+{new}\033[0m")
+                
+                # Handle length differences
+                if len(old_lines) > len(new_lines):
+                    for old in old_lines[len(new_lines):]:
+                        print(f"\033[31m-{old}\033[0m")
+                elif len(new_lines) > len(old_lines):
+                    for new_line in new_lines[len(old_lines):]:
+                        print(f"\033[32m+{new_line}\033[0m")
+                print()
+        
+        if not has_diff:
+            print("No differences found")
+    
     def status(self):
         """Show working tree status."""
         if not self.minigit_dir.exists():
@@ -287,6 +377,7 @@ def main():
         print("  add <file>        Stage file for commit")
         print("  commit -m <msg>   Create a commit")
         print("  log               Show commit history")
+        print("  diff [file]       Show differences")
         print("  status            Show repository status")
         print()
         print("Examples:")
@@ -321,6 +412,9 @@ def main():
     
     elif command == 'log':
         mg.log()
+    
+    elif command == 'diff':
+        mg.diff(args[0] if args else None)
     
     elif command == 'status':
         mg.status()
