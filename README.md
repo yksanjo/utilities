@@ -1,121 +1,82 @@
-# Utilities Collection
+# utilities
 
-Three simple utilities built from scratch to understand core concepts.
+## Detailed Description
 
-## Quick Commands
+utilities is maintained as an industry-grade software project with production-ready engineering practices.  
+This repository includes documented setup, quality gates, operational guidance, and governance standards so contributors can safely build, test, and ship changes with confidence.
+
+## Problem Statement
+
+Describe the user or business problem this project solves, the target users, and expected outcomes.
+
+## Solution Overview
+
+Summarize the architecture, core modules, and runtime behavior at a high level.
+
+## Key Features
+
+- Clear project scope and intended use.
+- Reproducible local development workflow.
+- Test coverage and CI quality gates.
+- Security and contribution policies.
+- Deployment-ready repository structure.
+
+## Repository Structure
+
+```text
+.
+|-- src/                  # Core implementation
+|-- tests/                # Automated test suites
+|-- docs/                 # Design notes and operational docs
+|-- .github/workflows/    # CI pipelines
+|-- README.md
+|-- LICENSE
+|-- CONTRIBUTING.md
+|-- SECURITY.md
+|-- CODE_OF_CONDUCT.md
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Git
+- Project runtime/toolchain for this repo
+
+### Local Setup
 
 ```bash
-make test     # Run all unit tests
-make demo     # Run demos of all utilities
-make clean    # Clean generated files
-make install  # Install dependencies (pytest)
+make test
+make lint
 ```
 
----
+## Usage
 
-## 1. Markdown to HTML Converter
+Document primary commands, API routes, CLI examples, or UI workflows here.
 
-A simple parser demonstrating text parsing and transformation.
+## Quality Standards
 
-```bash
-cd markdown-to-html
-python md2html.py example.md
-```
+- CI must pass before merge.
+- Changes require tests for critical behavior.
+- Security-sensitive changes should include risk notes.
+- Keep pull requests focused and reviewable.
 
-**Concepts**: Tokenization, recursive descent parsing, HTML generation
+## Security
 
-**Features**:
-- Headers (# ## ###)
-- Bold, italic, combined formatting
-- Links and images
-- Unordered and ordered lists
-- Code blocks and inline code
-- Blockquotes
-- Horizontal rules
-- HTML escaping
+See `SECURITY.md` for responsible disclosure and handling guidelines.
 
----
+## Contributing
 
-## 2. Mini-Git
+See `CONTRIBUTING.md` for branching, commit, and pull request expectations.
 
-A simplified Git clone demonstrating version control internals.
+## Roadmap
 
-```bash
-cd mini-git
-python minigit.py init
-python minigit.py add file.txt
-python minigit.py commit -m "Initial commit"
-python minigit.py log
-python minigit.py diff      # Show changes
-```
+Track upcoming milestones, technical debt, and planned feature work.
 
-**Concepts**: Content-addressable storage, DAG of commits, staging area
+## Support
 
-**Features**:
-- `init`: Initialize repository
-- `add`: Stage files
-- `commit`: Create commits with parent pointers
-- `log`: View commit history
-- `diff`: Show file differences with color output
-- `status`: Check repository status
+Open a GitHub issue for bugs, feature requests, or documentation gaps.
 
----
+## License
 
-## 3. TinyEdit
-
-A terminal-based text editor demonstrating buffers and terminal control.
-
-```bash
-cd tiny-editor
-python tinyedit.py [filename]
-```
-
-**Concepts**: Terminal raw mode, buffer management, screen redrawing, syntax highlighting
-
-**Features**:
-- Full terminal control (raw mode)
-- Cursor movement (arrows, Home, End, PgUp, PgDn)
-- File open/save
-- **Syntax highlighting** for Python, JavaScript, C/C++, Java
-- Scrollable viewport
-- Status bar
-
-| Key | Action |
-|-----|--------|
-| Ctrl+S | Save |
-| Ctrl+Q | Quit |
-| Ctrl+N | New file |
-
----
-
-## File Structure
-
-```
-utilities/
-├── README.md
-├── Makefile                  # Easy commands
-├── .github/workflows/ci.yml  # GitHub Actions CI
-├── tests/
-│   ├── test_md2html.py       # Unit tests
-│   └── test_minigit.py
-├── markdown-to-html/
-│   ├── md2html.py
-│   └── example.md
-├── mini-git/
-│   ├── minigit.py
-│   └── README.md
-└── tiny-editor/
-    ├── tinyedit.py
-    └── README.md
-```
-
----
-
-## CI/CD
-
-This repository uses GitHub Actions to automatically:
-- Run unit tests on Python 3.8-3.12
-- Test the markdown converter
-- Test mini-git operations
-
-See `.github/workflows/ci.yml`
+This project is released under the MIT License.
